@@ -5,7 +5,7 @@ defmodule AdventOfCode.Day01 do
     |> String.split("\n\n")
     |> Enum.map(&String.split(&1, "\n"))
     |> Enum.map(&sum_cal_array(&1))
-    |> Enum.sort(&(&1 >= &2))
+    |> Enum.sort(:desc)
   end
 
   def part1(args) do
