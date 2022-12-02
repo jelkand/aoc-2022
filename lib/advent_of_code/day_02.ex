@@ -1,37 +1,60 @@
 defmodule AdventOfCode.Day02 do
-  score_map = %{
-    rock: 1,
-    paper: 2,
-    scissors: 3,
-    draw: 3,
-    win: 6
+  # matchups are structured as:
+  # matchups[their_move][desired_outcome]
+  @matchups %{
+    rock: %{
+      win: :paper,
+      lose: :scissors,
+      draw: :rock
+    },
+    paper: %{
+      win: :scissors,
+      lose: :rock,
+      draw: :paper
+    },
+    scissors: %{
+      win: :rock,
+      lose: :paper,
+      draw: :scissors
+    }
   }
 
-  # matchups = %{
-  #   rock: %{
-  #     rock: :draw,
-  #     : :win,
-  #   }
-  # }
-  def part1(args) do
+  def parse_input(args) do
     args
     |> String.trim()
     |> String.split("\n")
-    |> Enum.map(&move_to_tuple/1)
+  end
+
+  def part1(args) do
+    args
+    |> parse_input()
+    |> Enum.map(&move_to_tuple_p1/1)
     |> Enum.map(&score/1)
     |> Enum.sum()
   end
 
   def part2(args) do
+    args
+    |> parse_input()
+    |> Enum.map(&move_to_tuple_p2/1)
+    |> Enum.map(&score/1)
+    |> Enum.sum()
   end
 
-  def move_to_tuple(line) do
+  def move_to_tuple_p1(line) do
     line
     |> String.split(" ")
-    |> Enum.map(&move_to_atom/1)
+    |> Enum.map(&move_to_atom_p1/1)
   end
 
-  def move_to_atom(move) do
+  def move_to_tuple_p2(line) do
+    line
+    |> String.split(" ")
+    |> Enum.map(&move_to_atom_p2/1)
+    |> to_moves()
+  end
+
+  def move_to_atom_p1(move) do
     case move do
       "A" -> :rock
       "X" -> :rock
@@ -40,6 +63,21 @@ defmodule AdventOfCode.Day02 do
       "C" -> :scissors
       "Z" -> :scissors
     end
+  end
+
+  def move_to_atom_p2(move) do
+    case move do
+      "A" -> :rock
+      "B" -> :paper
+      "C" -> :scissors
+      "X" -> :lose
+      "Y" -> :draw
+      "Z" -> :win
+    end
+  end
+
+  def to_moves([opponent, outcome]) do
+    [opponent, @matchups[opponent][outcome]]
   end
 
   def score([opponent_move, player_move]) do
