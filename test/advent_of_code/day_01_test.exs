@@ -43,6 +43,7 @@ defmodule AdventOfCode.Day01Test do
 
     10000
     """
+
     result = part2(input)
 
     assert result == 45000
