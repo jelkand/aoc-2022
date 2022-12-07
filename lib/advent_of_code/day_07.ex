@@ -33,11 +33,9 @@ defmodule AdventOfCode.Day07 do
   def part2(args) do
     [total_used | _] = directory = build_tree(args)
 
-    needed_to_free =
-      (@needed_space - (@max_available - total_used)) |> IO.inspect(label: "needed")
+    needed_to_free = @needed_space - (@max_available - total_used)
 
     directory
-    |> Enum.reverse()
     |> Enum.filter(fn size -> size >= needed_to_free end)
     |> Enum.min()
   end
