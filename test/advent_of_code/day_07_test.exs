@@ -3,36 +3,6 @@ defmodule AdventOfCode.Day07Test do
 
   import AdventOfCode.Day07
 
-  # test "foo" do
-  #   input = %{"/" => %{files: [{"i", 584}], files_size: 584}}
-
-  #   result = dirs_to_sizes(input)
-
-  #   assert result ==
-  #            %{"/" => %{files: [{"i", 584}], files_size: 584, size: 584}}
-  # end
-
-  # test "foo2" do
-  #   input = %{
-  #     "a" => %{
-  #       :files => [{"f", 29116}, {"g", 2557}, {"h.lst", 62596}],
-  #       :files_size => 94269,
-  #       "e" => %{files: [{"i", 584}], files_size: 584}
-  #     }
-  #   }
-
-  #   result = dirs_to_sizes(input)
-
-  #   assert result == %{
-  #            "a" => %{
-  #              :files => [{"f", 29116}, {"g", 2557}, {"h.lst", 62596}],
-  #              :files_size => 94269,
-  #              "e" => %{files: [{"i", 584}], files_size: 584, size: 584},
-  #              :size => 94853
-  #            }
-  #          }
-  # end
-
   test "part1" do
     input = """
     $ cd /
