@@ -17,8 +17,8 @@ defmodule AdventOfCode.Day07 do
   def part1(args) do
     args
     |> build_tree()
-    |> complete_tree()
-    |> Map.delete(:current_dir)
+    # |> complete_tree()
+    # |> Map.delete(:current_dir)
     |> IO.inspect()
 
     # |> dirs_to_size()
@@ -43,16 +43,19 @@ defmodule AdventOfCode.Day07 do
     do: Map.update!(acc, :current_dir, &(&1 ++ [dir_name]))
 
   # doesn't seem to be necessary right now?
-  def handle_command(["$", "ls"], acc),
-    do: Kernel.put_in(acc, acc.current_dir, %{files_size: 0, files: []})
+  def handle_command(["$", "ls"], acc) do
+    # acc
+    IO.inspect(acc, label: "ls")
+    Kernel.put_in(acc, acc.current_dir, [])
+  end
 
   def handle_command(["dir", dir_name], acc),
-    do: Kernel.put_in(acc, acc.current_dir ++ [dir_name], %{})
+    do: Kernel.update_in(acc, acc.current_dir, &(&1 ++ [%{name: dir_name}]))
 
-  def handle_command([size, name], acc),
-    do: Kernel.update_in(acc, acc.current_dir ++ [:files], &(&1 ++ [{name, get_integer(size)}]))
-
-  # |> Kernel.update_in(acc.current_dir ++ [:files_size], &(&1 + get_integer(size)))
+  def handle_command([size, name], acc) do
+    IO.inspect(acc)
+    Kernel.update_in(acc, acc.current_dir, &(&1 ++ [%{name: name, size: get_integer(size)}]))
+  end
 
   def get_integer(string) do
     string
