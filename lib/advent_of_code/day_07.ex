@@ -9,6 +9,9 @@ defmodule AdventOfCode.Day07 do
     |> Enum.map(&String.split(&1, " "))
     |> Enum.reduce(%{current_dir: []}, &handle_command/2)
     |> complete_tree()
+    |> Map.delete(:current_dir)
+    |> Enum.map(fn {_, value} -> value end)
+    |> Enum.sort(:desc)
   end
 
   def complete_tree(tree = %{current_dir: current_dir}) when current_dir == "/" do
@@ -22,34 +25,26 @@ defmodule AdventOfCode.Day07 do
   def part1(args) do
     args
     |> build_tree()
-    |> Map.delete(:current_dir)
-    |> Enum.map(fn {_, value} -> value end)
-    |> Enum.sort(:desc)
     |> Enum.filter(fn val -> val <= 100_000 end)
     |> Enum.sum()
   end
 
   def part2(args) do
-    directory =
-      args
-      |> build_tree()
-      |> Map.delete(:current_dir)
-      |> Enum.sort(fn {_, v1}, {_, v2} -> v1 >= v2 end)
-
-    total_used = Enum.at(directory, 0) |> Kernel.elem(1)
+    [total_used | _] = directory = build_tree(args)
 
     needed_to_free =
       (@needed_space - (@max_available - total_used)) |> IO.inspect(label: "needed")
 
     directory
     |> Enum.reverse()
-    |> Enum.filter(fn {_, size} -> size >= needed_to_free end)
-    |> Enum.at(1)
-    |> Kernel.elem(1)
+    |> Enum.filter(fn size -> size >= needed_to_free end)
+    |> Enum.min()
   end
 
+  def to_index(current_dir), do: Enum.join(current_dir, ":")
+
   def handle_command(["$", "cd", ".."], acc) do
-    size = Map.get(acc, Enum.join(acc.current_dir, ":"))
+    size = Map.get(acc, to_index(acc.current_dir))
 
     one_up =
       Map.get(acc, :current_dir)
@@ -65,17 +60,17 @@ defmodule AdventOfCode.Day07 do
   end
 
   def handle_command(["$", "ls"], acc) do
-    Map.put(acc, Enum.join(acc.current_dir, ":"), 0)
+    Map.put(acc, to_index(acc.current_dir), 0)
   end
 
   def handle_command(["dir", dir_name], acc) do
-    Map.put(acc, Enum.join(acc.current_dir ++ [dir_name], ":"), 0)
+    Map.put(acc, to_index(acc.current_dir ++ [dir_name]), 0)
   end
 
   def handle_command([size, _], acc) do
     Map.update(
       acc,
-      Enum.join(acc.current_dir, ":"),
+      to_index(acc.current_dir),
       0,
       &(&1 + get_integer(size))
     )
