@@ -1,9 +1,14 @@
 defmodule AdventOfCode.Day07 do
+  @max_available 70_000_000
+
+  @needed_space 30_000_000
+
   def build_tree(args) do
     args
     |> String.split("\n", trim: true)
     |> Enum.map(&String.split(&1, " "))
     |> Enum.reduce(%{current_dir: []}, &handle_command/2)
+    |> complete_tree()
   end
 
   def complete_tree(tree = %{current_dir: current_dir}) when current_dir == "/" do
@@ -17,44 +22,63 @@ defmodule AdventOfCode.Day07 do
   def part1(args) do
     args
     |> build_tree()
-    # |> complete_tree()
-    # |> Map.delete(:current_dir)
-    |> IO.inspect()
-
-    # |> dirs_to_size()
+    |> Map.delete(:current_dir)
+    |> Enum.map(fn {_, value} -> value end)
+    |> Enum.sort(:desc)
+    |> Enum.filter(fn val -> val <= 100_000 end)
+    |> Enum.sum()
   end
 
   def part2(args) do
+    directory =
+      args
+      |> build_tree()
+      |> Map.delete(:current_dir)
+      |> Enum.sort(fn {_, v1}, {_, v2} -> v1 >= v2 end)
+
+    total_used = Enum.at(directory, 0) |> Kernel.elem(1)
+
+    needed_to_free =
+      (@needed_space - (@max_available - total_used)) |> IO.inspect(label: "needed")
+
+    directory
+    |> Enum.reverse()
+    |> Enum.filter(fn {_, size} -> size >= needed_to_free end)
+    |> Enum.at(1)
+    |> Kernel.elem(1)
   end
 
   def handle_command(["$", "cd", ".."], acc) do
-    files_size = Kernel.get_in(acc, acc.current_dir ++ [:files_size])
-    IO.inspect(files_size, label: acc.current_dir)
+    size = Map.get(acc, Enum.join(acc.current_dir, ":"))
+
+    one_up =
+      Map.get(acc, :current_dir)
+      |> List.delete_at(-1)
 
     acc
+    |> Map.update(Enum.join(one_up, ":"), 0, &(&1 + size))
     |> Map.update!(:current_dir, &List.delete_at(&1, -1))
-    |> Kernel.put_in(
-      acc.current_dir ++ [:size],
-      files_size + Kernel.get_in(acc, acc.current_dir ++ [:files_size])
-    )
   end
 
-  def handle_command(["$", "cd", dir_name], acc),
-    do: Map.update!(acc, :current_dir, &(&1 ++ [dir_name]))
+  def handle_command(["$", "cd", dir_name], acc) do
+    Map.update!(acc, :current_dir, &(&1 ++ [dir_name]))
+  end
 
-  # doesn't seem to be necessary right now?
   def handle_command(["$", "ls"], acc) do
-    # acc
-    IO.inspect(acc, label: "ls")
-    Kernel.put_in(acc, acc.current_dir, [])
+    Map.put(acc, Enum.join(acc.current_dir, ":"), 0)
   end
 
-  def handle_command(["dir", dir_name], acc),
-    do: Kernel.update_in(acc, acc.current_dir, &(&1 ++ [%{name: dir_name}]))
+  def handle_command(["dir", dir_name], acc) do
+    Map.put(acc, Enum.join(acc.current_dir ++ [dir_name], ":"), 0)
+  end
 
-  def handle_command([size, name], acc) do
-    IO.inspect(acc)
-    Kernel.update_in(acc, acc.current_dir, &(&1 ++ [%{name: name, size: get_integer(size)}]))
+  def handle_command([size, _], acc) do
+    Map.update(
+      acc,
+      Enum.join(acc.current_dir, ":"),
+      0,
+      &(&1 + get_integer(size))
+    )
   end
 
   def get_integer(string) do
