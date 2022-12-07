@@ -14,12 +14,13 @@ defmodule AdventOfCode.Day07 do
     |> Enum.sort(:desc)
   end
 
-  def complete_tree(tree = %{current_dir: current_dir}) when current_dir == "/" do
+  def complete_tree(tree = %{current_dir: ["/"]}) do
     tree
   end
 
   def complete_tree(tree) do
     handle_command(["$", "cd", ".."], tree)
+    |> complete_tree()
   end
 
   def part1(args) do
