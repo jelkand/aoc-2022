@@ -48,11 +48,20 @@ defmodule AdventOfCode.Day09Test do
     assert result == 13
   end
 
-  @tag :skip
   test "part2" do
-    input = nil
+    input = """
+    R 5
+    U 8
+    L 8
+    D 3
+    R 17
+    D 10
+    L 25
+    U 20
+    """
+
     result = part2(input)
 
-    assert result
+    assert result === 36
   end
 end
