@@ -3,12 +3,49 @@ defmodule AdventOfCode.Day09Test do
 
   import AdventOfCode.Day09
 
-  @tag :skip
+  test "tail handler" do
+    input = %{head_pos: {2, 0}, tail_pos: {0, 0}, seen_pos: MapSet.new([{0, 0}])}
+
+    result = handle_tail(input)
+
+    assert result == %{head_pos: {2, 0}, tail_pos: {1, 0}, seen_pos: MapSet.new([{0, 0}, {1, 0}])}
+
+    input = %{head_pos: {2, 4}, tail_pos: {4, 3}, seen_pos: MapSet.new([{4, 3}])}
+    result = handle_tail(input)
+    assert result == %{head_pos: {2, 4}, tail_pos: {3, 4}, seen_pos: MapSet.new([{4, 3}, {3, 4}])}
+  end
+
+  test "diagonal handler" do
+    input = %{
+      head_pos: {4, 3},
+      seen_pos: MapSet.new([{0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 1}]),
+      tail_pos: {4, 1}
+    }
+
+    result = handle_tail(input)
+
+    assert result == %{
+             head_pos: {4, 3},
+             seen_pos: MapSet.new([{0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 1}, {4, 2}]),
+             tail_pos: {4, 2}
+           }
+  end
+
   test "part1" do
-    input = nil
+    input = """
+    R 4
+    U 4
+    L 3
+    D 1
+    R 4
+    D 1
+    L 5
+    R 2
+    """
+
     result = part1(input)
 
-    assert result
+    assert result == 13
   end
 
   @tag :skip

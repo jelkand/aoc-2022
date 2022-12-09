@@ -18,4 +18,7 @@ defmodule AdventOfCode.Helpers do
       _ -> nil
     end
   end
+
+  def sign(int) when int >= 0, do: 1
+  def sign(int) when int < 0, do: -1
 end
