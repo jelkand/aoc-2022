@@ -17,7 +17,7 @@ defmodule AdventOfCode.Day09 do
       &handle_move/2
     )
     |> Map.get(:seen_pos)
-    # |> pretty_print()
+    # |> pretty_print("part1.txt")
     |> MapSet.size()
   end
 
@@ -32,6 +32,7 @@ defmodule AdventOfCode.Day09 do
       &reduce_multiple/2
     )
     |> Map.get(:seen_pos)
+    # |> pretty_print("part2.txt")
     |> MapSet.size()
   end
 
@@ -49,7 +50,7 @@ defmodule AdventOfCode.Day09 do
     |> Map.put(:positions, Enum.reverse(updated_reversed_list))
   end
 
-  def pretty_print(set) do
+  def pretty_print(set, filename) do
     min_x = Enum.min_by(set, fn {x, _} -> x end) |> Kernel.elem(0)
     min_y = Enum.min_by(set, fn {_, y} -> y end) |> Kernel.elem(1)
     max_x = Enum.max_by(set, fn {x, _} -> x end) |> Kernel.elem(0)
@@ -57,17 +58,21 @@ defmodule AdventOfCode.Day09 do
 
     IO.puts("\n")
 
-    Enum.reduce(min_y..(max_y + 1), "", fn y, outer_acc ->
-      Enum.reduce(min_x..(max_x + 1), "", fn x, acc ->
-        cond do
-          {x, y} == {0, 0} -> acc <> "s"
-          MapSet.member?(set, {x, y}) -> acc <> "#"
-          true -> acc <> "."
-        end
-      end) <> "\n" <> outer_acc
-    end)
-    |> IO.puts()
+    {:ok, file} = File.open(filename, [:write])
 
+    text =
+      Enum.reduce(min_y..(max_y + 1), "", fn y, outer_acc ->
+        Enum.reduce(min_x..(max_x + 1), "", fn x, acc ->
+          cond do
+            {x, y} == {0, 0} -> acc <> "s"
+            MapSet.member?(set, {x, y}) -> acc <> "#"
+            true -> acc <> "."
+          end
+        end) <> "\n" <> outer_acc
+      end)
+
+    IO.binwrite(file, text)
+    File.close(file)
     set
   end
 
