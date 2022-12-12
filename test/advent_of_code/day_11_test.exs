@@ -40,6 +40,7 @@ defmodule AdventOfCode.Day11Test do
     assert result == 10605
   end
 
+  @tag :skip
   test "part2" do
     input = nil
     result = part2(@input)
