@@ -4,8 +4,20 @@ defmodule AdventOfCode.Day12 do
     {start_marker, _} = :binary.match(string, "S")
     {end_marker, _} = :binary.match(string, "E")
 
-    {{div(start_marker, row_size), rem(start_marker, row_size)},
-     {div(end_marker, row_size), rem(end_marker, row_size)}}
+    {index_to_pos(start_marker, row_size), index_to_pos(end_marker, row_size)}
+  end
+
+  def find_end(string, row_size) do
+    {start_marker, _} = :binary.match(string, "E")
+    index_to_pos(start_marker, row_size)
+  end
+
+  def find_all_starts(str, row_size) do
+    String.split(str, "", trim: true)
+    |> Enum.with_index()
+    |> Enum.filter(fn {height, _} -> height == "a" end)
+    |> Enum.map(fn {_, idx} -> index_to_pos(idx, row_size) end)
+    |> MapSet.new()
   end
 
   def index_to_pos(index, row_size), do: {div(index, row_size), rem(index, row_size)}
@@ -29,6 +41,16 @@ defmodule AdventOfCode.Day12 do
        end)}
     end)
     |> Map.new()
+  end
+
+  def invert_adj_list(adj_list) do
+    Enum.reduce(adj_list, %{}, fn {pos, adjacents}, acc ->
+      Enum.reduce(adjacents, acc, fn adj, inner_acc ->
+        Map.update(inner_acc, adj, [pos], fn item ->
+          item ++ [pos]
+        end)
+      end)
+    end)
   end
 
   def are_neighbors?(position_height, neighbor, height_map) do
@@ -100,5 +122,18 @@ defmodule AdventOfCode.Day12 do
   end
 
   def part2(args) do
+    row_length = :binary.match(args, "\n") |> Kernel.elem(0)
+    without_breaks = String.replace(args, "\n", "")
+
+    end_pos = find_end(without_breaks, row_length)
+    starts = find_all_starts(without_breaks, row_length)
+
+    to_height_map(without_breaks, row_length)
+    |> to_adj_list()
+    |> invert_adj_list()
+    |> djikstras(end_pos, nil)
+    |> Enum.filter(fn {k, _} -> MapSet.member?(starts, k) end)
+    |> Enum.min_by(fn {_, v} -> v end)
+    |> Kernel.elem(1)
   end
 end
