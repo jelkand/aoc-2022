@@ -64,7 +64,8 @@ defmodule AdventOfCode.Day12 do
     do: [{row + 1, col}, {row, col + 1}, {row - 1, col}, {row, col - 1}]
 
   def djikstras(adjacency_list, start, goal) do
-    unvisited = Map.keys(adjacency_list) |> MapSet.new()
+    to_visit_tracker = MapSet.new()
+    to_visit = [start]
     visited = MapSet.new()
 
     distances =
@@ -73,37 +74,39 @@ defmodule AdventOfCode.Day12 do
       |> Map.new()
       |> Map.update!(start, fn _ -> 0 end)
 
-    djikstras_internal(start, goal, adjacency_list, distances, visited, unvisited)
+    djikstras_internal(to_visit, goal, adjacency_list, distances, visited, to_visit_tracker)
   end
 
-  defp djikstras_internal(current, goal, _, distances, _, _) when current == goal do
+  defp djikstras_internal([current | _], goal, _, distances, _, _) when current == goal do
     Map.put(distances, goal, distances[current])
   end
 
-  defp djikstras_internal(_, _, _, distances, _, unvisited)
-       when unvisited == %MapSet{} do
+  defp djikstras_internal([], _, _, distances, _, _) do
     distances
   end
 
-  defp djikstras_internal(current, goal, adj_list, distances, visited, unvisited) do
+  defp djikstras_internal([current | rest], goal, adj_list, distances, visited, to_visit_tracker) do
     new_distances =
-      adj_list[current]
+      Map.get(adj_list, current, [])
       |> Enum.map(fn neighbor -> {neighbor, distances[current] + 1} end)
       |> Map.new()
       |> Map.merge(distances, fn _k, v1, v2 -> Kernel.min(v1, v2) end)
 
-    MapSet.put(visited, current)
-    MapSet.delete(unvisited, current)
+    new_visited = MapSet.put(visited, current)
 
-    new_current = Enum.min_by(unvisited, fn pos -> distances[pos] end)
+    to_visit =
+      Map.get(adj_list, current, [])
+      |> Enum.filter(fn neighbor ->
+        !MapSet.member?(new_visited, neighbor) and !MapSet.member?(to_visit_tracker, neighbor)
+      end)
 
     djikstras_internal(
-      new_current,
+      rest ++ to_visit,
       goal,
       adj_list,
       new_distances,
-      MapSet.put(visited, current),
-      MapSet.delete(unvisited, current)
+      new_visited,
+      MapSet.union(to_visit_tracker, MapSet.new(to_visit))
     )
   end
 
@@ -114,7 +117,6 @@ defmodule AdventOfCode.Day12 do
 
     {start_pos, end_pos} = find_start_end(without_breaks, row_length)
 
-    # adj_list =
     to_height_map(without_breaks, row_length)
     |> to_adj_list()
     |> djikstras(start_pos, end_pos)

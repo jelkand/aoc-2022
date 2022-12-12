@@ -21,9 +21,9 @@ defmodule AdventOfCode.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:benchee, "~> 1.0"},
+      {:benchee, "~> 1.0"}
       # {:pqueue, "~> 2.0"},
-      {:prioqueue, "~> 0.2.7"}
+      # {:prioqueue, "~> 0.2.7"}
     ]
   end
 end
