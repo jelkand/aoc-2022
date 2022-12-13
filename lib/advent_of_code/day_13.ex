@@ -26,7 +26,7 @@ defmodule AdventOfCode.Day13 do
 
   def parse_strings(pair_str) do
     String.split(pair_str, "\n", trim: true)
-    |> Enum.map(fn str -> Code.eval_string(str) |> Kernel.elem(0) end)
+    |> Enum.map(fn str -> Code.eval_string(str) |> elem(0) end)
     |> List.to_tuple()
   end
 
@@ -36,9 +36,9 @@ defmodule AdventOfCode.Day13 do
     |> Enum.map(&parse_strings/1)
     |> Enum.map(&compare/1)
     |> Enum.with_index(1)
-    |> Enum.filter(&(Kernel.elem(&1, 0) < 0))
+    |> Enum.filter(&(elem(&1, 0) < 0))
     |> IO.inspect(label: "diffs")
-    |> Enum.map(&Kernel.elem(&1, 1))
+    |> Enum.map(&elem(&1, 1))
     |> Enum.sum()
   end
 
