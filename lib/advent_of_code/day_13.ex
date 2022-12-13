@@ -26,6 +26,12 @@ defmodule AdventOfCode.Day13 do
     end
   end
 
+  def find_dividers(sorted) do
+    first = Enum.find_index(sorted, fn ele -> ele == [[2]] end)
+    second = Enum.find_index(sorted, fn ele -> ele == [[6]] end)
+    {first, second}
+  end
+
   def parse_strings(pair_str) do
     String.split(pair_str, "\n", trim: true)
     |> Enum.map(fn str -> Code.eval_string(str) |> elem(0) end)
@@ -44,9 +50,15 @@ defmodule AdventOfCode.Day13 do
   end
 
   def part2(args) do
-    String.split(args, "\n\n", trim: true)
+    (args <>
+       """
+       [[2]]
+       [[6]]
+       """)
+    |> String.split("\n\n", trim: true)
     |> Enum.flat_map(&(parse_strings(&1) |> Tuple.to_list()))
-    |> Enum.sort(fn {a, b} -> compare(a, b) <= 0 end)
-    |> IO.inspect()
+    |> Enum.sort(fn a, b -> compare(a, b) <= 0 end)
+    |> find_dividers()
+    |> (fn {a, b} -> (a + 1) * (b + 1) end).()
   end
 end
