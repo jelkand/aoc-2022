@@ -8,15 +8,12 @@ defmodule AdventOfCode.Day14Test do
   503,4 -> 502,4 -> 502,9 -> 494,9
   """
 
+  @tag :skip
   test "part1" do
     assert part1(@input) == 24
   end
 
-  @tag :skip
   test "part2" do
-    input = nil
-    result = part2(input)
-
-    assert result
+    assert part2(@input) == 93
   end
 end
