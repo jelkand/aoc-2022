@@ -38,4 +38,13 @@ defmodule AdventOfCode.Helpers do
   def ranges_to_points({x_range, y_range}) do
     Enum.map(x_range, fn x_val -> Enum.map(y_range, fn y_val -> {x_val, y_val} end) end)
   end
+
+  def permuations(input) do
+    Enum.flat_map(input, fn x ->
+      Enum.map(input, fn y ->
+        {x, y}
+      end)
+    end)
+    |> Enum.filter(fn {x, y} -> x != y end)
+  end
 end

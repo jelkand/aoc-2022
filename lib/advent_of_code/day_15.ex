@@ -9,34 +9,58 @@ defmodule AdventOfCode.Day15 do
     {{x, y}, {beacon_x, beacon_y}, distance}
   end
 
+  def merge_ranges(first_low..first_high, second_low..second_high) when first_high >= second_low,
+    do: [min(first_low, second_low)..max(first_high, second_high)]
+
+  def merge_ranges(first, second), do: [first, second]
+
+  def reduce_ranges(range, []), do: [range]
+
+  def reduce_ranges(first, [second | rest]) do
+    merge_ranges(first, second) ++ rest
+  end
+
+  def can_merge_further?(ranges) do
+    Helpers.permuations(ranges)
+    |> Enum.any?(fn {a, b} -> !Range.disjoint?(a, b) end)
+  end
+
+  def merge_until_complete(ranges) do
+    merged = Enum.reduce(ranges, [], &reduce_ranges/2)
+
+    case can_merge_further?(merged) do
+      true -> merge_until_complete(merged)
+      false -> merged
+    end
+  end
+
   def part1(args, row) do
     sensors =
       String.split(args, "\n", trim: true)
       |> Enum.map(&parse_sensor/1)
 
-    beacons =
-      Enum.map(sensors, &elem(&1, 1))
-      |> MapSet.new()
+    ranges =
+      Enum.reduce(sensors, [], fn {{x, y}, _, distance}, acc ->
+        unless abs(y - row) > distance do
+          each_direction_on_row = div(1 + distance * 2 - 2 * abs(y - row), 2)
+          [(x - each_direction_on_row)..(x + each_direction_on_row) | acc]
+        else
+          acc
+        end
+      end)
+      |> Enum.sort(:desc)
+      |> merge_until_complete()
 
-    Enum.reduce(sensors, MapSet.new(), fn {{x, y}, _, distance}, acc ->
-      unless abs(y - row) > distance do
-        each_direction_on_row = div(1 + distance * 2 - 2 * abs(y - row), 2)
+    beacons_in_ranges =
+      Enum.map(sensors, fn {_, b, _} -> b end)
+      |> Enum.uniq()
+      |> Enum.count(fn {x, y} ->
+        y == row and Enum.any?(ranges, fn range -> x in range end)
+      end)
 
-        points =
-          Helpers.ranges_to_points(
-            {(x - each_direction_on_row)..(x + each_direction_on_row), row..row}
-          )
-          |> List.flatten()
-          |> MapSet.new()
-
-        MapSet.union(acc, points)
-      else
-        acc
-      end
-    end)
-    |> MapSet.difference(beacons)
-    |> IO.inspect()
-    |> MapSet.size()
+    ranges
+    |> Enum.reduce(0, fn range, acc -> acc + Range.size(range) end)
+    |> Kernel.-(beacons_in_ranges)
   end
 
   def part2(args) do
