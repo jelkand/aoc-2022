@@ -9,10 +9,12 @@ defmodule AdventOfCode.Day15 do
     {{x, y}, {beacon_x, beacon_y}, distance}
   end
 
-  def merge_ranges(first_low..first_high, second_low..second_high) when first_high >= second_low,
-    do: [min(first_low, second_low)..max(first_high, second_high)]
-
-  def merge_ranges(first, second), do: [first, second]
+  def merge_ranges(first_low..first_high = first, second_low..second_high = second) do
+    case Range.disjoint?(first, second) do
+      false -> [min(first_low, second_low)..max(first_high, second_high)]
+      true -> [first, second]
+    end
+  end
 
   def reduce_ranges(range, []), do: [range]
 
@@ -34,22 +36,30 @@ defmodule AdventOfCode.Day15 do
     end
   end
 
+  def ranges_for_row(sensors, row) do
+    Enum.reduce(sensors, [], fn {{x, y}, _, distance}, acc ->
+      unless abs(y - row) > distance do
+        each_direction_on_row = div(1 + distance * 2 - 2 * abs(y - row), 2)
+        [(x - each_direction_on_row)..(x + each_direction_on_row) | acc]
+      else
+        acc
+      end
+    end)
+    |> Enum.sort(:asc)
+    |> merge_until_complete()
+  end
+
+  def range_finder({_, [_]}), do: false
+  def range_finder({_, [_..low, high.._]}), do: high - low > 1
+
+  def get_frequency({y, [_..x, _]}), do: (x + 1) * 4_000_000 + y
+
   def part1(args, row) do
     sensors =
       String.split(args, "\n", trim: true)
       |> Enum.map(&parse_sensor/1)
 
-    ranges =
-      Enum.reduce(sensors, [], fn {{x, y}, _, distance}, acc ->
-        unless abs(y - row) > distance do
-          each_direction_on_row = div(1 + distance * 2 - 2 * abs(y - row), 2)
-          [(x - each_direction_on_row)..(x + each_direction_on_row) | acc]
-        else
-          acc
-        end
-      end)
-      |> Enum.sort(:desc)
-      |> merge_until_complete()
+    ranges = ranges_for_row(sensors, row)
 
     beacons_in_ranges =
       Enum.map(sensors, fn {_, b, _} -> b end)
@@ -63,6 +73,14 @@ defmodule AdventOfCode.Day15 do
     |> Kernel.-(beacons_in_ranges)
   end
 
-  def part2(args) do
+  def part2(args, size) do
+    sensors =
+      String.split(args, "\n", trim: true)
+      |> Enum.map(&parse_sensor/1)
+
+    Enum.map(0..size, fn row -> {row, ranges_for_row(sensors, row)} end)
+    |> Enum.map(fn {row, ranges} -> {row, Enum.sort(ranges, :asc)} end)
+    |> Enum.find(&range_finder/1)
+    |> get_frequency()
   end
 end
