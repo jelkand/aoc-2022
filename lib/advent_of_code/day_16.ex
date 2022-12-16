@@ -9,8 +9,6 @@ defmodule AdventOfCode.Day16 do
       String.replace(neighbors_def, ~r" tunnels? leads? to valves? ", "")
       |> String.split(", ")
 
-    # {name, %{flow_rate: Helpers.get_integer(flow_rate_str), neighbors: neighbors}}
-
     {{name, Helpers.get_integer(flow_rate_str)}, {name, neighbors}}
   end
 
@@ -39,7 +37,7 @@ defmodule AdventOfCode.Day16 do
 
     case highest_score > 0 do
       false ->
-        {path, score} |> IO.inspect(label: "bailing out early")
+        {path, score}
 
       true ->
         Enum.filter(scoring_map, fn {_, _, score} -> score > 0 end)
@@ -52,33 +50,11 @@ defmodule AdventOfCode.Day16 do
             time_remaining - next_dist - 1
           )
         end)
-
-        # |> IO.inspect(label: "for #{time_remaining}")
     end
-
-    # neighbors =
-    #   Enum.map(scoring_map[head], fn {k, func} -> {k, func.(time_remaining)} end)
-    #   |> IO.inspect(label: "scores")
   end
 
   def part1(args) do
     [pressure_map, adj_list] = parse_input(args)
-
-    # valves = Map.keys(pressure_map)
-
-    # scoring_map =
-    #   Enum.reduce(valves, %{}, fn valve, acc ->
-    #     nil
-    # Helpers.djikstras(adj_list, valve)
-    # |> Enum.map(fn {k, dist} ->
-    #   # calculate time remaining when you get there, and multiply by flow
-    #   # to see how much it's worth if we head to it now.
-    #   {k, fn time_remaining -> time_remaining - dist * pressure_map[k] end}
-    # end)
-    # distances = Map.put(acc, valve, distances)
-    # end)
-
-    # |> IO.inspect()
 
     solve(["AA"], 0, adj_list, pressure_map, 30)
     |> List.flatten()
