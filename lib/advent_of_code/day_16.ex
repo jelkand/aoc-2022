@@ -1,7 +1,80 @@
 defmodule AdventOfCode.Day16 do
+  alias AdventOfCode.Helpers
+
+  def parse_valve(valve_str) do
+    [valve_def, neighbors_def] = String.split(valve_str, ";")
+    [_, name, _, _, _, flow_rate_str] = String.split(valve_def, [" ", "="])
+
+    neighbors =
+      String.replace(neighbors_def, ~r" tunnels? leads? to valves? ", "")
+      |> String.split(", ")
+
+    # {name, %{flow_rate: Helpers.get_integer(flow_rate_str), neighbors: neighbors}}
+
+    {{name, Helpers.get_integer(flow_rate_str)}, {name, neighbors}}
+  end
+
+  def parse_input(str) do
+    String.split(str, "\n", trim: true)
+    |> Enum.map(&parse_valve/1)
+    |> Enum.reduce({[], []}, fn {value, neighbor}, {values, adj} ->
+      {[value | values], [neighbor | adj]}
+    end)
+    |> Tuple.to_list()
+    |> Enum.map(&Enum.into(&1, %{}))
+  end
+
+  def solve(path, score, _, _, 0), do: {path, score}
+
+  def solve([head | _] = path, score, adj_list, pressure_map, time_remaining) do
+    [{next_valve, next_dist, next_score} | _] =
+      scoring_map =
+      Helpers.djikstras(adj_list, head)
+      |> Enum.map(fn {k, dist} ->
+        # calculate time remaining when you get there, and multiply by flow
+        # to see how much it's worth if we head to it now.
+        {k, dist, (time_remaining - dist - 1) * pressure_map[k]}
+      end)
+      |> Enum.sort_by(fn {_valve, _dist, score} -> score end, :desc)
+      |> IO.inspect(label: "sorted")
+
+    # Enum.map(scoring_map, fn )
+    solve(
+      [next_valve | path],
+      score + next_score,
+      adj_list,
+      Map.put(pressure_map, next_valve, 0),
+      time_remaining - next_dist - 1
+    )
+
+    # neighbors =
+    #   Enum.map(scoring_map[head], fn {k, func} -> {k, func.(time_remaining)} end)
+    #   |> IO.inspect(label: "scores")
+  end
+
   def part1(args) do
+    [pressure_map, adj_list] = parse_input(args)
+
+    valves = Map.keys(pressure_map)
+
+    # scoring_map =
+    #   Enum.reduce(valves, %{}, fn valve, acc ->
+    #     nil
+    # Helpers.djikstras(adj_list, valve)
+    # |> Enum.map(fn {k, dist} ->
+    #   # calculate time remaining when you get there, and multiply by flow
+    #   # to see how much it's worth if we head to it now.
+    #   {k, fn time_remaining -> time_remaining - dist * pressure_map[k] end}
+    # end)
+    # distances = Map.put(acc, valve, distances)
+    # end)
+
+    # |> IO.inspect()
+
+    solve(["AA"], 0, adj_list, pressure_map, 30)
   end
 
   def part2(args) do
+    IO.inspect(args, label: "part 2")
   end
 end

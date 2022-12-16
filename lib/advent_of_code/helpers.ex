@@ -47,4 +47,52 @@ defmodule AdventOfCode.Helpers do
     end)
     |> Enum.filter(fn {x, y} -> x != y end)
   end
+
+  @infinity 999_999_999
+  def djikstras(adjacency_list, start, goal \\ nil) do
+    to_visit_tracker = MapSet.new()
+    to_visit = [start]
+    visited = MapSet.new()
+
+    distances =
+      Map.keys(adjacency_list)
+      |> Enum.map(fn pos -> {pos, @infinity} end)
+      |> Map.new()
+      |> Map.update!(start, fn _ -> 0 end)
+
+    djikstras_internal(to_visit, goal, adjacency_list, distances, visited, to_visit_tracker)
+  end
+
+  defp djikstras_internal([current | _], goal, _, distances, _, _) when current == goal do
+    Map.put(distances, goal, distances[current])
+  end
+
+  defp djikstras_internal([], _, _, distances, _, _) do
+    distances
+  end
+
+  defp djikstras_internal([current | rest], goal, adj_list, distances, visited, to_visit_tracker) do
+    new_distances =
+      Map.get(adj_list, current, [])
+      |> Enum.map(fn neighbor -> {neighbor, distances[current] + 1} end)
+      |> Map.new()
+      |> Map.merge(distances, fn _k, v1, v2 -> Kernel.min(v1, v2) end)
+
+    new_visited = MapSet.put(visited, current)
+
+    to_visit =
+      Map.get(adj_list, current, [])
+      |> Enum.filter(fn neighbor ->
+        !MapSet.member?(new_visited, neighbor) and !MapSet.member?(to_visit_tracker, neighbor)
+      end)
+
+    djikstras_internal(
+      rest ++ to_visit,
+      goal,
+      adj_list,
+      new_distances,
+      new_visited,
+      MapSet.union(to_visit_tracker, MapSet.new(to_visit))
+    )
+  end
 end
