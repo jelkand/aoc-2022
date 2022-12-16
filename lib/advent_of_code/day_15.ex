@@ -19,6 +19,7 @@ defmodule AdventOfCode.Day15 do
   def reduce_ranges(range, []), do: [range]
 
   def reduce_ranges(first, [second | rest]) do
+    # IO.inspect({first, second}, label: "reducing")
     merge_ranges(first, second) ++ rest
   end
 
@@ -28,7 +29,9 @@ defmodule AdventOfCode.Day15 do
   end
 
   def merge_until_complete(ranges) do
-    merged = Enum.reduce(ranges, [], &reduce_ranges/2)
+    merged =
+      Enum.sort(ranges, :desc)
+      |> Enum.reduce([], &reduce_ranges/2)
 
     case can_merge_further?(merged) do
       true -> merge_until_complete(merged)
@@ -47,6 +50,14 @@ defmodule AdventOfCode.Day15 do
     end)
     |> Enum.sort(:asc)
     |> merge_until_complete()
+  end
+
+  def ranges_for_sensor({{x, y}, _, distance}, low..high) do
+    Enum.map(max(low, y - distance)..min(high, y + distance), fn row ->
+      each_direction_on_row = div(1 + distance * 2 - 2 * abs(y - row), 2)
+      {row, max(low, x - each_direction_on_row)..min(high, x + each_direction_on_row)}
+    end)
+    |> Map.new()
   end
 
   def range_finder({_, [_]}), do: false
@@ -77,6 +88,22 @@ defmodule AdventOfCode.Day15 do
     sensors =
       String.split(args, "\n", trim: true)
       |> Enum.map(&parse_sensor/1)
+
+    # |> IO.inspect(label: "sensors")
+
+    # Enum.reduce(sensors, %{}, fn sensor, acc ->
+    #   ranges_for_sensor(sensor, 0..size)
+    #   |> Map.merge(acc, fn _k, v1, v2 ->
+    #     merge_until_complete(List.flatten([v1, v2]))
+    #   end)
+    # end)
+    # |> Enum.map(fn {row, ranges} -> {row, Enum.sort(ranges, :asc)} end)
+    # |> Enum.filter(fn {row, _} -> row in 0..size end)
+    # |> Enum.sort(:asc)
+    # |> Enum.find(&range_finder/1)
+    # |> get_frequency()
+
+    # |> IO.inspect(label: "other approach")
 
     Enum.map(0..size, fn row -> {row, ranges_for_row(sensors, row)} end)
     |> Enum.map(fn {row, ranges} -> {row, Enum.sort(ranges, :asc)} end)
