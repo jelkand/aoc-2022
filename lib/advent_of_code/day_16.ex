@@ -24,10 +24,10 @@ defmodule AdventOfCode.Day16 do
     |> Enum.map(&Enum.into(&1, %{}))
   end
 
-  def solve(path, score, _, _, 0), do: {path, score}
+  def solve(path, score, _, _, 0), do: {path, score} |> IO.inspect(label: "zero time")
 
   def solve([head | _] = path, score, adj_list, pressure_map, time_remaining) do
-    [{next_valve, next_dist, next_score} | _] =
+    [{_, _, highest_score} | _] =
       scoring_map =
       Helpers.djikstras(adj_list, head)
       |> Enum.map(fn {k, dist} ->
@@ -36,16 +36,25 @@ defmodule AdventOfCode.Day16 do
         {k, dist, (time_remaining - dist - 1) * pressure_map[k]}
       end)
       |> Enum.sort_by(fn {_valve, _dist, score} -> score end, :desc)
-      |> IO.inspect(label: "sorted")
 
-    # Enum.map(scoring_map, fn )
-    solve(
-      [next_valve | path],
-      score + next_score,
-      adj_list,
-      Map.put(pressure_map, next_valve, 0),
-      time_remaining - next_dist - 1
-    )
+    case highest_score > 0 do
+      false ->
+        {path, score} |> IO.inspect(label: "bailing out early")
+
+      true ->
+        Enum.filter(scoring_map, fn {_, _, score} -> score > 0 end)
+        |> Enum.map(fn {next_valve, next_dist, next_score} ->
+          solve(
+            [next_valve | path],
+            score + next_score,
+            adj_list,
+            Map.put(pressure_map, next_valve, 0),
+            time_remaining - next_dist - 1
+          )
+        end)
+
+        # |> IO.inspect(label: "for #{time_remaining}")
+    end
 
     # neighbors =
     #   Enum.map(scoring_map[head], fn {k, func} -> {k, func.(time_remaining)} end)
@@ -55,7 +64,7 @@ defmodule AdventOfCode.Day16 do
   def part1(args) do
     [pressure_map, adj_list] = parse_input(args)
 
-    valves = Map.keys(pressure_map)
+    # valves = Map.keys(pressure_map)
 
     # scoring_map =
     #   Enum.reduce(valves, %{}, fn valve, acc ->
@@ -72,6 +81,10 @@ defmodule AdventOfCode.Day16 do
     # |> IO.inspect()
 
     solve(["AA"], 0, adj_list, pressure_map, 30)
+    |> List.flatten()
+    |> Enum.sort_by(fn {_path, score} -> score end, :desc)
+    |> List.first()
+    |> elem(1)
   end
 
   def part2(args) do
