@@ -24,7 +24,7 @@ defmodule AdventOfCode.Day15 do
   end
 
   def can_merge_further?(ranges) do
-    Helpers.permuations(ranges)
+    Helpers.permute_pairs(ranges)
     |> Enum.any?(fn {a, b} -> !Range.disjoint?(a, b) end)
   end
 

@@ -1,6 +1,6 @@
 defmodule AdventOfCode.Day16Test do
   use ExUnit.Case
-
+  alias AdventOfCode.Helpers
   import AdventOfCode.Day16
 
   @input """
@@ -16,15 +16,23 @@ defmodule AdventOfCode.Day16Test do
   Valve JJ has flow rate=21; tunnel leads to valve II
   """
 
+  test "permute list" do
+    assert Helpers.permute_list([1, 2, 3]) |> MapSet.new() ==
+             MapSet.new([
+               [1, 2, 3],
+               [1, 3, 2],
+               [2, 1, 3],
+               [2, 3, 1],
+               [3, 2, 1],
+               [3, 1, 2]
+             ])
+  end
+
   test "part1" do
     assert part1(@input) == 1651
   end
 
-  @tag :skip
   test "part2" do
-    input = nil
-    result = part2(input)
-
-    assert result
+    assert part2(@input) == 1707
   end
 end

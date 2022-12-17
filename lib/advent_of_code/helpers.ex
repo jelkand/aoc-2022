@@ -39,13 +39,19 @@ defmodule AdventOfCode.Helpers do
     Enum.map(x_range, fn x_val -> Enum.map(y_range, fn y_val -> {x_val, y_val} end) end)
   end
 
-  def permuations(input) do
+  def permute_pairs(input) do
     Enum.flat_map(input, fn x ->
       Enum.map(input, fn y ->
         {x, y}
       end)
     end)
     |> Enum.filter(fn {x, y} -> x != y end)
+  end
+
+  def permute_list([]), do: [[]]
+
+  def permute_list(list) do
+    for h <- list, t <- permute_list(list -- [h]), do: [h | t]
   end
 
   @infinity 999_999_999
