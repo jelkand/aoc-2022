@@ -5,7 +5,7 @@ defmodule AdventOfCode.Day17Test do
 
   @tag :skip
   test "part1" do
-    input = nil
+    input = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"
     result = part1(input)
 
     assert result

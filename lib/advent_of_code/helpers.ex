@@ -54,6 +54,18 @@ defmodule AdventOfCode.Helpers do
     for h <- list, t <- permute_list(list -- [h]), do: [h | t]
   end
 
+  def pairs_of([], right) do
+    Enum.map(right, fn r -> {nil, r} end)
+  end
+
+  def pairs_of(left, []) do
+    Enum.map(left, fn l -> {l, nil} end)
+  end
+
+  def pairs_of(left, right) do
+    for l <- left, r <- right, do: {l, r}
+  end
+
   @infinity 999_999_999
   def djikstras(adjacency_list, start, goal \\ nil) do
     to_visit_tracker = MapSet.new()

@@ -22,7 +22,7 @@ defmodule AdventOfCode.Day16 do
     |> Enum.map(&Enum.into(&1, %{}))
   end
 
-  def solve(path, score, _, _, 0), do: score
+  def solve(path, score, _, _, 0), do: {path, score}
 
   def solve([head | _] = path, score, adj_list, pressure_map, time_remaining) do
     [{_, _, highest_score} | _] =
@@ -37,7 +37,8 @@ defmodule AdventOfCode.Day16 do
 
     case highest_score > 0 do
       false ->
-        score
+        # |> IO.inspect(label: "finished with #{time_remaining} time remaining:")
+        {path, score}
 
       true ->
         Enum.filter(scoring_map, fn {_, _, score} -> score > 0 end)
@@ -61,28 +62,8 @@ defmodule AdventOfCode.Day16 do
       {k, dist, (time_remaining - dist - 1) * pressure_map[k]}
     end)
     |> Enum.sort_by(fn {_valve, _dist, score} -> score end, :desc)
-    # |> IO.inspect(label: "Unfiltered map for #{node} with #{time_remaining} time remaining")
     |> Enum.filter(fn {_, _, score} -> score > 0 end)
   end
-
-  # def solve_left(
-  #       [lh | _] = left,
-  #       right,
-  #       score,
-  #       adj_list,
-  #       pressure_map,
-  #       l_time_remaining,
-  #       r_time_remaining
-  #     ) do
-  #   if Enum.max_by(pressure_map, fn {_k, v} -> v end) |> elem(1) == 0 do
-  #     IO.inspect({score, left, right}, label: "final score for l, r")
-  #     score
-  #   else
-  #     [{lnode, ldist, lscore} | _] =
-  #       build_scoring_map(adj_list, pressure_map, lh, l_time_remaining)
-  #       |> IO.inspect(label: "L scoring map for #{l_time_remaining} time remaining")
-  #   end
-  # end
 
   def solve_pair(_, _, score, _, _, 0, 0), do: score |> IO.inspect(label: "bailing both zero")
 
@@ -95,163 +76,122 @@ defmodule AdventOfCode.Day16 do
         l_time_remaining,
         r_time_remaining
       ) do
-    if Enum.max_by(pressure_map, fn {_k, v} -> v end) |> elem(1) == 0 do
-      IO.inspect({score, left, right, pressure_map}, label: "final score for l, r")
-      score
-    else
-      IO.inspect(
-        {left, right, Enum.filter(pressure_map, fn {_, v} -> v > 0 end) |> Map.new(),
-         l_time_remaining, r_time_remaining, score},
-        label: "lh,rh"
-      )
+    cond do
+      Enum.max_by(pressure_map, fn {_k, v} -> v end) |> elem(1) == 0 ->
+        score
 
-      pressure_set =
-        Enum.filter(pressure_map, fn {_, v} -> v > 0 end)
-        |> Map.new()
-        |> Map.keys()
-        |> MapSet.new()
+      true ->
+        left_scoring_map = build_scoring_map(adj_list, pressure_map, lh, l_time_remaining)
 
-      Helpers.djikstras(adj_list, rh)
-      |> Enum.filter(fn {k, _v} ->
-        k in pressure_set
-      end)
-      |> IO.inspect(label: "right valve distances from #{rh}")
+        right_scoring_map = build_scoring_map(adj_list, pressure_map, rh, r_time_remaining)
 
-      left_scoring_map = build_scoring_map(adj_list, pressure_map, lh, l_time_remaining)
-      # |> IO.inspect(label: "L scoring map for #{l_time_remaining} time remaining")
+        pairs =
+          Helpers.pairs_of(left_scoring_map, right_scoring_map)
+          |> Enum.filter(&filter_pairs/1)
 
-      right_scoring_map =
-        build_scoring_map(adj_list, pressure_map, rh, r_time_remaining)
-        |> IO.inspect(label: "R scoring map for #{r_time_remaining} time remaining")
+        # |> IO.inspect(label: "pairs")
 
-      {{lnode, ldist, lscore}, {rnode, rdist, rscore}} =
-        get_targets(left_scoring_map, right_scoring_map)
+        case {left_scoring_map, right_scoring_map, pairs} do
+          {[], [], _} ->
+            score
 
-      # new_pressure_map = Map.put(pressure_map, lnode, 0) |> Map.put(rnode, 0)
+          {_, _, []} ->
+            score
 
-      # |> IO.inspect(label: "ltime")
-      l_time = l_time_remaining - ldist - 1
-      # |> IO.inspect(label: "rtime")
-      r_time = r_time_remaining - rdist - 1
+          _ ->
+            IO.inspect(pairs, label: "recursing for pairs:")
 
-      # cond do
-      #   rnode == nil and lnode == nil ->
-      #     score
-
-      # lnode == nil ->
-      #   solve([rnode | right], score + rscore, adj_list, pressure_map, r_time_remaining)
-
-      # rnode == nil ->
-      #   solve([lnode | left], score + lscore, adj_list, pressure_map, l_time_remaining)
-
-      #   true ->
-      #     solve_pair(
-      #       [lnode | left] |> Enum.filter(fn val -> val != nil end),
-      #       [rnode | right] |> Enum.filter(fn val -> val != nil end),
-      #       score + lscore + rscore,
-      #       adj_list,
-      #       Map.put(pressure_map, lnode, 0) |> Map.put(rnode, 0),
-      #       l_time,
-      #       r_time
-      #     )
-      # end
-
-      case {l_time, r_time, left_scoring_map, right_scoring_map} do
-        {_, _, [], []} ->
-          score
-
-        {ltime, rtime, _, _} when ltime - rtime > 0 ->
-          # IO.inspect(lnode, label: "sending to left:")
-
-          solve_pair(
-            [lnode | left] |> Enum.filter(fn val -> val != nil end),
-            right,
-            score + lscore,
-            adj_list,
-            Map.put(pressure_map, lnode, 0),
-            l_time,
-            r_time_remaining
-          )
-
-        {ltime, rtime, _, _} when ltime == rtime ->
-          # IO.inspect(l_time - r_time, label: "doing a pair")
-
-          solve_pair(
-            [lnode | left] |> Enum.filter(fn val -> val != nil end),
-            [rnode | right] |> Enum.filter(fn val -> val != nil end),
-            score + lscore + rscore,
-            adj_list,
-            Map.put(pressure_map, lnode, 0) |> Map.put(rnode, 0),
-            l_time,
-            r_time
-          )
-
-        {ltime, rtime, _, _} when ltime - rtime < 0 ->
-          # IO.inspect(rnode, label: "sending to right:")
-
-          solve_pair(
-            left,
-            [rnode | right] |> Enum.filter(fn val -> val != nil end),
-            score + rscore,
-            adj_list,
-            Map.put(pressure_map, rnode, 0),
-            l_time_remaining,
-            r_time
-          )
-      end
+            Enum.map(pairs, fn {l, r} ->
+              solve_inner(
+                left,
+                right,
+                score,
+                adj_list,
+                pressure_map,
+                l_time_remaining,
+                r_time_remaining,
+                {l, r}
+              )
+            end)
+        end
     end
   end
 
-  def get_targets([], []) do
-    {{nil, 0, 0}, {nil, 0, 0}}
+  def solve_inner(
+        left,
+        right,
+        score,
+        adj_list,
+        pressure_map,
+        l_time_remaining,
+        r_time_remaining,
+        {nil, {rnode, rdist, rscore}}
+      ) do
+    solve_pair(
+      left,
+      [rnode | right],
+      score + rscore,
+      adj_list,
+      Map.put(pressure_map, rnode, 0),
+      l_time_remaining - 1,
+      r_time_remaining - rdist - 1
+    )
   end
 
-  def get_targets([], [right | _]) do
-    {{nil, 0, 0}, right}
+  def solve_inner(
+        left,
+        right,
+        score,
+        adj_list,
+        pressure_map,
+        l_time_remaining,
+        r_time_remaining,
+        {{lnode, ldist, lscore}, nil}
+      ) do
+    solve_pair(
+      [lnode | left],
+      right,
+      score + lscore,
+      adj_list,
+      Map.put(pressure_map, lnode, 0),
+      l_time_remaining - ldist - 1,
+      r_time_remaining - 1
+    )
   end
 
-  def get_targets([left | _], []) do
-    {left, {nil, 0, 0}}
+  def solve_inner(
+        left,
+        right,
+        score,
+        adj_list,
+        pressure_map,
+        l_time_remaining,
+        r_time_remaining,
+        {{lnode, ldist, lscore}, {rnode, rdist, rscore}}
+      ) do
+    solve_pair(
+      [lnode | left],
+      [rnode | right],
+      score + lscore + rscore,
+      adj_list,
+      Map.put(pressure_map, lnode, 0) |> Map.put(rnode, 0),
+      l_time_remaining - ldist - 1,
+      r_time_remaining - rdist - 1
+    )
   end
 
-  def get_targets([{lnode, ldist, lscore} | _], [
-        {rnode, _, rscore},
-        {rnext, rdist, rnext_score} | _
-      ])
-      when lnode == rnode and lscore > rscore do
-    {{lnode, ldist, lscore}, {rnext, rdist, rnext_score}}
-  end
-
-  def get_targets([{lnode, _, lscore}, {lnext, ldist, lnext_score} | _], [
-        {rnode, rdist, rscore},
-        {_, _, rnext_score} | _
-      ])
-      when lnode == rnode and lscore == rscore and lnext_score >= rnext_score do
-    {{lnext, ldist, lnext_score}, {rnode, rdist, rscore}}
-  end
-
-  def get_targets([{lnode, ldist, lscore} | _], [
-        {rnode, _, rscore},
-        {rnext, rdist, rnext_score} | _
-      ])
-      when lnode == rnode and lscore == rscore do
-    {{lnode, ldist, lscore}, {rnext, rdist, rnext_score}}
-  end
-
-  def get_targets([{lnode, _, _}, {lnext, ldist, lnext_score} | _], [{rnode, rdist, rscore} | _])
-      when lnode == rnode do
-    {{lnext, ldist, lnext_score}, {rnode, rdist, rscore}}
-  end
-
-  def get_targets([{lnode, ldist, lscore} | _], [{rnode, rdist, rscore} | _]),
-    do: {{lnode, ldist, lscore}, {rnode, rdist, rscore}}
+  def filter_pairs({nil, _}), do: true
+  def filter_pairs({_, nil}), do: true
+  def filter_pairs({l, r}), do: elem(l, 0) !== elem(r, 0)
 
   def part1(args) do
     [pressure_map, adj_list] = parse_input(args)
 
     solve(["AA"], 0, adj_list, pressure_map, 30)
     |> List.flatten()
+    |> Enum.map(&elem(&1, 1))
     |> Enum.max()
+    |> IO.inspect(label: "part 1")
 
     # |> Enum.sort_by(fn score -> score end, :desc)
     # |> List.first()
@@ -318,10 +258,37 @@ defmodule AdventOfCode.Day16 do
     |> Enum.max()
   end
 
+  def other_part2(args) do
+    [pressure_map, adj_list] = parse_input(args)
+
+    {me_path, me_score} =
+      solve(["AA"], 0, adj_list, pressure_map, 26)
+      |> List.flatten()
+      |> Enum.max_by(fn {_path, score} -> score end)
+      |> IO.inspect(label: "me")
+
+    updated_pressures = Enum.reduce(me_path, pressure_map, fn k, acc -> Map.put(acc, k, 0) end)
+
+    {ele_path, ele_score} =
+      solve(["AA"], 0, adj_list, updated_pressures, 26)
+      |> List.flatten()
+      |> Enum.max_by(fn {_path, score} -> score end)
+      |> IO.inspect(label: "elephant")
+
+    Enum.reduce(ele_path, updated_pressures, fn k, acc -> Map.put(acc, k, 0) end)
+    |> Enum.filter(fn {_, v} -> v > 0 end)
+    |> IO.inspect(label: "unopened")
+
+    me_score + ele_score
+  end
+
   def part2(args) do
     [pressure_map, adj_list] = parse_input(args)
     # [valve | non_starting_valves] = Map.keys(pressure_map) |> IO.inspect(label: "keys")
 
-    solve_pair(["AA"], ["AA"], 0, adj_list, pressure_map, 26, 26) |> IO.inspect()
+    solve_pair(["AA"], ["AA"], 0, adj_list, pressure_map, 26, 26)
+    |> List.flatten()
+    |> Enum.max()
+    |> IO.inspect()
   end
 end

@@ -11,7 +11,7 @@ defmodule Mix.Tasks.D16.P2 do
       do: Benchee.run(%{part_2: fn -> input |> part2() end}),
       else:
         input
-        |> part2()
+        |> other_part2()
         |> IO.inspect(label: "Part 2 Results")
   end
 end

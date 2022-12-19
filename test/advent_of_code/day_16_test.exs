@@ -32,7 +32,12 @@ defmodule AdventOfCode.Day16Test do
     assert part1(@input) == 1651
   end
 
+  @tag :skip
   test "part2" do
     assert part2(@input) == 1707
+  end
+
+  test "other part2" do
+    assert other_part2(@input) == 1707
   end
 end
